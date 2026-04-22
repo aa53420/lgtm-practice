@@ -1,0 +1,36 @@
+# 개발/단일노드용 Tempo 설정
+server:
+  # Tempo HTTP API 포트
+  # docker-compose에서 "3200:3200" 과 맞춰야 함
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        # Alloy가 Tempo로 gRPC OTLP 전송할 때 사용
+        grpc:
+        # 필요하면 HTTP OTLP도 받을 수 있게 열어둠
+        http:
+
+ingester:
+  # trace를 메모리/WAL에 잠시 보관했다가 block으로 자르는 주기
+  max_block_duration: 5m
+
+compactor:
+  # block 정리 작업용 로컬 디렉토리
+  compaction:
+    block_retention: 24h
+
+storage:
+  trace:
+    # 로컬 개발용 저장소
+    backend: local
+
+    wal:
+      # 수신 직후 WAL 저장 경로
+      path: /var/tempo/wal
+
+    local:
+      # 최종 trace block 저장 경로
+      path: /var/tempo/blocks

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <springProperty name="APP_NAME" source="spring.application.name" defaultValue="app"/>
+  <property name="LOG_PATH" value="./logs"/>
+  <property name="LOG_FILE_NAME" value="app"/>
+
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%blue(${APP_NAME})] [traceId=%X{trace_id:-none} spanId=%X{span_id:-none}] %cyan(%logger{36}) - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%blue(${APP_NAME})] [traceId=%X{trace_id:-none} spanId=%X{span_id:-none}] %cyan(%logger{36}) - %msg%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/archive/${LOG_FILE_NAME}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>  <!-- 파일당 100MB -->
+      <maxHistory>30</maxHistory>       <!-- 30일치 보관 -->
+      <totalSizeCap>1GB</totalSizeCap>  <!-- 전체 로그 최대 크기 -->
+    </rollingPolicy>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+  </root>
+
+  <logger name="com.example.lgtm" level="TRACE"/>
+
+</configuration>

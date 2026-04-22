@@ -1,0 +1,75 @@
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+//
+// LOG: spring app -> log file -> Loki
+//
+local.file_match "spring_log" {
+  path_targets = [
+    {
+      "__path__"  = "/logs/app.log",
+      "job"       = "spring-boot",
+      "app"       = "lgtm-practice",
+    },
+  ]
+}
+
+loki.source.file "spring_log" {
+  targets    = local.file_match.spring_log.targets
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+//
+// METRICS: scrape Spring Boot /actuator/prometheus -> Mimir
+//
+prometheus.scrape "spring" {
+  targets = [
+    {
+      "__address__" = "host.docker.internal:8080",
+      "job"         = "spring-boot",
+    },
+  ]
+  metrics_path    = "/actuator/prometheus"
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.default.receiver]
+}
+
+prometheus.remote_write "default" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+  }
+}
+
+//
+// TRACES: OTel Java Agent -> Alloy(OTLP) -> Tempo
+//
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}

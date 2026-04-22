@@ -1,0 +1,97 @@
+name: lgtm-infra
+services:
+  alloy:
+    image: grafana/alloy:v1.15.1
+    container_name: alloy
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    ports:
+      - "12345:12345" # Alloy UI / debug
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ../logs:/logs:ro
+      - alloy-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    depends_on:
+      - loki
+      - mimir
+      - tempo
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki:3.6.10
+    container_name: loki
+    command: -config.file=/etc/loki/config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+    restart: unless-stopped
+    networks:
+      - observability
+
+  mimir:
+    image: grafana/mimir:3.0.6
+    container_name: mimir
+    command:
+      - -config.file=/etc/mimir/config.yml
+    ports:
+      - "9009:9009"
+    volumes:
+      - ./mimir/config.yml:/etc/mimir/config.yml:ro
+      - mimir-data:/data
+    restart: unless-stopped
+    networks:
+      - observability
+
+  tempo:
+    image: grafana/tempo:2.10.4
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo/config.yml" ]
+    ports:
+      - "3200:3200" # Tempo HTTP
+    volumes:
+      - ./tempo/config.yml:/etc/tempo/config.yml:ro
+      - tempo-data:/var/tempo
+    restart: unless-stopped
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:13.0.1
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - loki
+      - mimir
+      - tempo
+    restart: unless-stopped
+    networks:
+      - observability
+
+networks:
+  observability:
+
+volumes:
+  alloy-data:
+  loki-data:
+  mimir-data:
+  tempo-data:
+  grafana-data:

@@ -1,0 +1,42 @@
+# Loki 단일 인스턴스 로컬 설정
+
+# 멀티테넌시 비활성화
+# true 시 모든 요청에 X-Scope-OrgID 헤더 필요 → 로컬에서는 false
+auth_enabled: false
+
+server:
+  http_listen_port: 3100  # Loki API 및 수집 엔드포인트
+  grpc_listen_port: 9096  # 내부 컴포넌트 간 통신용 (Alloy → Loki OTLP 등)
+
+common:
+  instance_addr: 127.0.0.1  # 이 인스턴스의 주소 (싱글 노드이므로 localhost)
+  path_prefix: /loki        # 아래 storage 경로들의 기본 prefix
+  replication_factor: 1     # 싱글 노드 → 복제 없이 1개만 저장
+  ring:
+    kvstore:
+      store: inmemory  # 클러스터 노드 정보를 메모리에 저장 (consul/etcd는 멀티 노드용, 로컬은 inmemory로 충분)
+
+schema_config:
+  configs:
+    - from: 2024-01-01          # 이 스키마를 적용할 시작 날짜
+      store: tsdb               # 인덱스 저장 방식: TSDB (현재 권장, BoltDB 대체)
+      object_store: filesystem  # 청크(실제 로그 데이터) 저장 위치: 로컬 파일시스템
+      schema: v13               # 인덱스 스키마 버전 (현재 최신 권장)
+      index:
+        prefix: index_          # 인덱스 파일명 prefix
+        period: 24h             # 인덱스 파일을 24시간 단위로 분리해서 저장
+
+storage_config:
+  tsdb_shipper:
+    active_index_directory: /loki/index # 현재 쓰고 있는 인덱스 파일 위치
+    cache_location: /loki/index_cache   # 인덱스 조회 캐시 위치 (쿼리 성능 향상)
+  filesystem:
+    directory: /loki/chunks # 실제 로그 데이터(청크) 저장 경로
+
+limits_config:
+  reject_old_samples: true          # 너무 오래된 로그 수집 거부 활성화
+  reject_old_samples_max_age: 168h  # 기준: 현재 시각으로부터 7일 이전 로그는 거부
+  allow_structured_metadata: true   # OTel이 붙여 보내는 traceID/spanID 등 Structured Metadata 수신 허용 (Tempo와 Trace ↔ Log 연동 시 필수)
+
+compactor:
+  working_directory: /loki/compactor  # 오래된 청크를 압축·정리하는 작업 임시 경로 compactor가 주기적으로 실행되며 디스크 절약
