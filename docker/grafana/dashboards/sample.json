@@ -573,7 +573,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
-          "expr": "{job=\"spring-boot\"} | logfmt | level=~\"(?i)($level)\"",
+          "expr": "{job=\"spring-boot\"} | logfmt | level=~\"(?i)(${level:pipe})\"",
           "legendFormat": "",
           "refId": "A"
         }
@@ -628,13 +628,10 @@
       "targets": [
         {
           "datasource": { "type": "tempo", "uid": "tempo" },
-          "queryType": "nativeSearch",
-          "serviceName": "",
-          "spanName": "",
-          "search": "",
-          "minDuration": "",
-          "maxDuration": "",
+          "queryType": "traceql",
+          "query": "{}",
           "limit": 20,
+          "tableType": "spans",
           "refId": "A"
         }
       ]
