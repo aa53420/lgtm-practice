@@ -4,14 +4,16 @@ server:
   # docker-compose에서 "3200:3200" 과 맞춰야 함
   http_listen_port: 3200
 
+# Alloy가 Tempo로 gRPC OTLP 전송할 때 사용
 distributor:
   receivers:
+
     otlp:
       protocols:
-        # Alloy가 Tempo로 gRPC OTLP 전송할 때 사용
         grpc:
-        # 필요하면 HTTP OTLP도 받을 수 있게 열어둠
+          endpoint: 0.0.0.0:4317
         http:
+          endpoint: 0.0.0.0:4318
 
 ingester:
   # trace를 메모리/WAL에 잠시 보관했다가 block으로 자르는 주기
