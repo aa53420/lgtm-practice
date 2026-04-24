@@ -24,6 +24,17 @@ compactor:
   compaction:
     block_retention: 24h
 
+metrics_generator:
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://mimir:9009/api/v1/push
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, span-metrics]
+
 storage:
   trace:
     # 로컬 개발용 저장소
