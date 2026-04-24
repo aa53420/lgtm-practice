@@ -29,10 +29,10 @@ flowchart LR
 %% =======================
 %% 연결
 %% =======================
-    APP -- "log (stdout, file)" --> ALLOY
+    APP -- " log (stdout, file) " --> ALLOY
     APP -- trace --> AGENT
-    ALLOY -- "metric (scrap /actuator/prometheus)" --> APP
-    AGENT -- "OTLP" --> ALLOY
+    ALLOY -- " metric (scrap /actuator/prometheus) " --> APP
+    AGENT -- " OTLP " --> ALLOY
     ALLOY --> LOKI
     ALLOY --> MIMIR
     ALLOY --> TEMPO
@@ -43,10 +43,20 @@ flowchart LR
 
 ## 🚀 실행
 
+## Grafana Dashboard
 
+### Grid pos
+
+| porperty | description      |
+|----------|------------------|
+| w        | 너비 (최대24)        |
+| h        | 높이 (약 30px)      |
+| x        | 가로 시작 위치 (0-23)  |
+| y        | 세로 시작 위치 (위에서부터) |
 
 ## 📌️ 참고
 
 ### agent download
+
 [opentelemetry-java-instrumentation](https://github.com/open-telemetry/opentelemetry-java-instrumentation)
 
